@@ -31,14 +31,14 @@ Note the `-A` argument - this is important. The `-A` allows us to "jump" from no
 **SSH to node2**: In the second terminal, run the following command (substitute the floating IP assigned to your node1 for `A.B.C.D`) to SSH to node2, but using node1 to "jump" there (since node2 does not have a floating IP assigned, we cannot SSH to it directly):
 
 ```
-ssh -A -J cc@$A.B.C.D cc@192.168.1.12
+ssh -A -J cc@A.B.C.D cc@192.168.1.12
 ```
 
 
 **SSH to node3**: In the second terminal, run the following command (substitute the floating IP assigned to your node1 for `A.B.C.D`) to SSH to node3, but using node1 to "jump" there (since node3 does not have a floating IP assigned, we cannot SSH to it directly):
 
 ```
-ssh -A -J cc@$A.B.C.D cc@192.168.1.13
+ssh -A -J cc@A.B.C.D cc@192.168.1.13
 ```
 
 
@@ -590,36 +590,4 @@ When we are finished, we can clean up everything in the namespace with
 # run on node1
 kubectl delete --all deployments --namespace=foo
 ```
-
-
-
-{	"transactions":			          58,
-	"availability":			       75.32,
-	"elapsed_time":			       29.26,
-	"data_transferred":		        0.00,
-	"response_time":		        2.81,
-	"transaction_rate":		        1.98,
-	"throughput":			        0.00,
-	"concurrency":			        5.58,
-	"successful_transactions":	          58,
-	"failed_transactions":		          19,
-	"longest_transaction":		       12.38,
-	"shortest_transaction":		        0.90
-}
-
-
-{	"transactions":			         615,
-	"availability":			      100.00,
-	"elapsed_time":			       29.36,
-	"data_transferred":		        0.01,
-	"response_time":		        0.47,
-	"transaction_rate":		       20.95,
-	"throughput":			        0.00,
-	"concurrency":			        9.89,
-	"successful_transactions":	         615,
-	"failed_transactions":		           0,
-	"longest_transaction":		        1.08,
-	"shortest_transaction":		        0.14
-}
-
 
