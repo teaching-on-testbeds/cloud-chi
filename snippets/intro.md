@@ -4,7 +4,7 @@ In this tutorial, we will explore some elements of cloud computing infrastructur
 
 * First, we will provision virtual machines, networks, and routers using the OpenStack GUI, Horizon. Then, we will practice using the CLI. 
 * We will use Docker to containerize a simple application and serve it from our cloud resources.
-* Finally, we will deploy Kubernetes to our cloud, and use it to manage our containerized application.
+* Finally, we will install Kubernetes on our cluster, and use it to manage our containerized application.
 
 To run this experiment, you should have already created an account on Chameleon, and become part of a project. You should also have added your SSH key to the KVM@TACC site.
 
