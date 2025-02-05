@@ -261,7 +261,14 @@ Now, we are going to prepare a file that describes the details of the service we
 vim deployment.yaml
 ```
 
-and use `i` to switch from command mode to insert mode. Then, paste the following:
+and use `i` to switch from command mode to insert mode. 
+
+> **Note**:
+> 
+>  Whitespace matters in YAML files, so when pasting content in this file, make sure to match the indentation shown here!
+
+
+Then, paste the following:
 
 ```
 apiVersion: v1

@@ -1,4 +1,4 @@
-all: index.md 0_intro.ipynb 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 5_delete.ipynb
+all: index.md 0_intro.ipynb 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 4_kubernetes.ipynb 5_delete.ipynb
 
 clean: 
 	rm index.md 0_intro.ipynb 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 4_kubernetes.ipynb 5_delete.ipynb
