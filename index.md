@@ -55,7 +55,7 @@ First, let's set up our "private" network.
 
 You will be prompted to set up your network step by step using a graphical "wizard".
 
--   On the first ("Network") tab, specify the network name as `<code>`{=html}private_cloud_net\_`<b>`{=html}netID`</b>`{=html}`</code>`{=html} where in place of `<code>`{=html}`<b>`{=html}netID`</b>`{=html}`</code>`{=html} you substitute your own net ID (e.g. `ff524` in my case). Leave other settings at their defaults, and click "Next".
+-   On the first ("Network") tab, specify the network name as {=html}`<code>`{=html}private_cloud_net\_`<b>`{=html}netID`</b>`{=html}`</code>`{=html}{=html} where in place of `<code>`{=html}`<b>`{=html}netID`</b>`{=html}`</code>`{=html} you substitute your own net ID (e.g. `ff524` in my case). Leave other settings at their defaults, and click "Next".
 -   On the second ("Subnet") tab, specify the subnet name as `<code>`{=html}private_cloud_subnet\_`<b>`{=html}netID`</b>`{=html}`</code>`{=html} where in place of `<code>`{=html}`<b>`{=html}netID`</b>`{=html}`</code>`{=html} you substitute your own net ID (e.g. `ff524` in my case). Specify the subnet address as `192.168.1.0/24`. Check the "Disable gateway" box. Leave other settings at their defaults, and click "Next".
 -   On the third ("Subnet Details") tab, leave all settings at their default values. Click "Create".
 
