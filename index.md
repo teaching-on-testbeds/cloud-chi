@@ -1835,14 +1835,12 @@ If you keep watching, though, after about 5 minutes of minimal load, the deploym
 
 ### Stop the deployment
 
-When we are finished, we can clean up everything in the namespace with
-
+When we are finished, we can clean up everything with
 
 ```bash
 # run on node1
-kubectl delete --all deployments --namespace=foo
+kubectl delete -f deployment.yaml
 ```
-
 
 ## Delete resources
 
