@@ -41,7 +41,9 @@ We will use the OpenStack graphical user interface, which is called Horizon, to 
 -   log in if prompted to do so
 -   check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
 
-> **Note** Be careful to set the *name* of each resource - network, router, or compute instance - exactly as instructed.
+> **Note**
+>
+> Be careful to set the *name* of each resource - network, router, or compute instance - exactly as instructed.
 
 ### Provision a "private" network
 
@@ -1049,7 +1051,13 @@ The repository includes the following materials:
       -   requirements.txt
       -   Dockerfile
 
-where `static` and `templates` are directories containing the HTML, CSS, and JS materials to implement the front end; `food11.pth` is a Pytorch model and `app.py` implements a web application in Flask serving this model, `requirements.txt` specifies the Python libraries required, and `Dockerfile` is a set of instructions for building a container image.
+where
+
+-   `static` and `templates` are directories containing the HTML, CSS, and JS materials to implement the front end
+-   `food11.pth` is a Pytorch model,
+-   `app.py` implements a web application in Flask serving this model,
+-   `requirements.txt` specifies the Python libraries required,
+-   and `Dockerfile` is a set of instructions for building a container image.
 
 We can take a closer look at the `Dockerfile` to see how the container image will be built. It is based on a Python image; then it installs Python libraries, copies the contents of the repository into the working directory, exposes port 8000 on the container, and then runs the Python application (which will listen for incoming connections on port 8000).
 
@@ -1641,3 +1649,31 @@ kubectl delete --all deployments --namespace=foo
 { "transactions": 58, "availability": 75.32, "elapsed_time": 29.26, "data_transferred": 0.00, "response_time": 2.81, "transaction_rate": 1.98, "throughput": 0.00, "concurrency": 5.58, "successful_transactions": 58, "failed_transactions": 19, "longest_transaction": 12.38, "shortest_transaction": 0.90 }
 
 { "transactions": 615, "availability": 100.00, "elapsed_time": 29.36, "data_transferred": 0.01, "response_time": 0.47, "transaction_rate": 20.95, "throughput": 0.00, "concurrency": 9.89, "successful_transactions": 615, "failed_transactions": 0, "longest_transaction": 1.08, "shortest_transaction": 0.14 }
+
+## Delete resources
+
+When we are finished with the experiment, we delete resources to free them for others.
+
+We will use the Horizon GUI again. To access this interface,
+
+-   from the [Chameleon website](https://chameleoncloud.org/hardware/)
+-   click "Experiment" \> "KVM@TACC"
+-   log in if prompted to do so
+-   check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
+
+Then, delete resources in *exactly* this order:
+
+-   First, click on Network \> Floating IPs. In any row that includes your net ID in the "Mapped Fixed IP Address" column, click "Disassociate", then "Release Floating IP". Wait until this is finished.
+-   Next, click on Compute \> Instances. Check the box next to any instance(s) that include your net ID. Then, click "Delete Instances". Wait until this is finished.
+-   Click on Network \> Networks. Check the box next to any network(s) that include your net ID. Then, click "Delete Networks". Wait until this is finished.
+
+
+<hr>
+
+<small>Questions about this material? Contact Fraida Fund</small>
+
+<hr>
+
+<small>This material is based upon work supported by the National Science Foundation under Grant No. 2230079.</small>
+
+<small>Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.</small>
