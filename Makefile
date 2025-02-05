@@ -1,7 +1,7 @@
 all: index.md 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 5_delete.ipynb
 
 clean: 
-	rm index.md 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 5_delete.ipynb
+	rm index.md 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 4_kubernetes.ipynb 5_delete.ipynb
 
 index.md: snippets/*.md images/*
 	cat snippets/intro.md \

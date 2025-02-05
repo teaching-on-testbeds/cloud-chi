@@ -1526,7 +1526,7 @@ metadata:
 
 This says we are going to define a **Service**. A Service in Kubernetes is the network endpoint on which your application can be reached; although the application is actually going to be executed by one or more containers potentially distributed across nodes in the cluster, it can always be reached at this network endpoint.
 
-We specify the name of the service, `gourmetgram-kube-svc`, and that it is in the `kube-gourmegram` namespace.
+We specify the name of the service, `gourmetgram-kube-svc`, and that it is in the `kube-gourmetgram` namespace.
 
 Next, paste in the rest of the definition of the Service:
 
