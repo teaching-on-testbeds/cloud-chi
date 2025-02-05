@@ -1,3 +1,6 @@
+::: {.cell .markdown}
+
+
 # Cloud Computing on Chameleon
 
 In this tutorial, we will explore some elements of cloud computing infrastructure using Chameleon, an OpenStack cloud (although the basic principles are common to all types of clouds). 
@@ -8,6 +11,9 @@ In this tutorial, we will explore some elements of cloud computing infrastructur
 
 To run this experiment, you should have already created an account on Chameleon, and become part of a project. You should also have added your SSH key to the KVM@TACC site.
 
+:::
+
+::: {.cell .markdown}
 
 ## Experiment topology 
 
@@ -26,5 +32,36 @@ This includes:
   * the VMs will also be attached to a "private" network that we provision, on which the virtual machine instances can communicate with one another. We will use the following subnet on this network: 192.168.1.0/24. This means that every VM instance on this network will get an address in the form 192.168.1.X, where X is different for each VM instance on the network.
   * We will get a publicly routable "floating IP" address for one of the VM instances, and add this address to the VM's network interface on the Internet-connected network. This will allow us to SSH to this VM over the Internet, and we can then "hop" from this VM to any of the others.
 
+:::
+
+::: {.cell .markdown}
+
+## Provision a key
+
+Before you begin, open this experiment on Trovi:
+
+* Use this link: [Cloud Computing on Chameleon](https://chameleoncloud.org/experiment/share/a5efb034-917e-4fdd-b83d-1a7f8930d960) on Trovi
+* Then, click “Launch on Chameleon”. This will start a new Jupyter server for you, with the experiment materials already in it.
+
+You will see several notebooks inside the `cloud-chi` directory - look for the one titled `0_intro.ipynb`. Open this notebook and execute the following cell (and make sure the correct project is selected):
+
+:::
+
+::: {.cell .code}
+```python
+from chi import server, context
+
+context.version = "1.0" 
+context.choose_project()
+context.choose_site(default="KVM@TACC")
+
+server.update_keypair()
+```
+:::
+
+::: {.cell .markdown}
+
+Then, you may continue following along at [Cloud Computing on Chameleon](https://teaching-on-testbeds.github.io/cloud-chi/) until the next part that requires the Jupyter environment. 
 
 
+:::

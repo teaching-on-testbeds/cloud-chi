@@ -1,7 +1,7 @@
-all: index.md 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 5_delete.ipynb
+all: index.md 0_intro.ipynb 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 5_delete.ipynb
 
 clean: 
-	rm index.md 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 4_kubernetes.ipynb 5_delete.ipynb
+	rm index.md 0_intro.ipynb 1_provision_gui.ipynb 2_provision_cli.ipynb 3_docker.ipynb 4_kubernetes.ipynb 5_delete.ipynb
 
 index.md: snippets/*.md images/*
 	cat snippets/intro.md \
@@ -14,6 +14,13 @@ index.md: snippets/*.md images/*
 	grep -v '^:::' index.tmp.md > index.md
 	rm index.tmp.md
 	cat snippets/footer.md >> index.md
+
+0_intro.ipynb: snippets/provision_gui.md
+	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
+                -i snippets/frontmatter_python.md snippets/intro.md \
+                -o 0_intro.ipynb  
+	sed -i 's/attachment://g' 0_intro.ipynb
+
 
 1_provision_gui.ipynb: snippets/provision_gui.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
