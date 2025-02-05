@@ -162,6 +162,7 @@ You will be prompted to set up your instance step by step using a graphical "wiz
 #cloud-config
 runcmd:
   - echo "127.0.1.1 $(hostname)" >> /etc/hosts
+  - su cc -c /usr/local/bin/cc-load-public-keys
 ```
 
 Then you can click "Launch Instance" (the remaining tabs are not required).
@@ -239,6 +240,7 @@ inside the SSH session
 ### Provision additional instances
 
 We *could* use a similar procedure to provision the two additional VMs we will need, but that's a lot of clicks! Instead, we will use the `openstack` command line interface.
+
 
 ## Provision resources using the `openstack` CLI
 

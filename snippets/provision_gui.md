@@ -105,6 +105,7 @@ You will be prompted to set up your instance step by step using a graphical "wiz
 #cloud-config
 runcmd:
   - echo "127.0.1.1 $(hostname)" >> /etc/hosts
+  - su cc -c /usr/local/bin/cc-load-public-keys
 ```
 
 Then you can click "Launch Instance" (the remaining tabs are not required).
