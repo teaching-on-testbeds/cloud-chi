@@ -159,7 +159,7 @@ ssh -i ~/.ssh/id_rsa_chameleon cc@A.B.C.D
 
 where
 
-* in place of ` ~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to KVM@TACC
+* in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to KVM@TACC
 * in place of `A.B.C.D`, use the floating IP address you just associated to your instance.
 
 and confirm that you can access the compute instance. Run

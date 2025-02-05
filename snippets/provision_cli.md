@@ -11,7 +11,7 @@ Although the GUI is useful for exploring the capabilities of a cloud, the comman
 
 To follow along, open this experiment on Trovi:
 
-* Use this link: [Cloud Computing]() on Trovi
+* Use this link: [Cloud Computing on Chameleon](https://chameleoncloud.org/experiment/share/a5efb034-917e-4fdd-b83d-1a7f8930d960) on Trovi
 * Then, click “Launch on Chameleon”. This will start a new Jupyter server for you, with the experiment materials already in it.
 
 You will see several notebooks inside the `cloud-chi` directory - look for the one titled `2_provision_cli.ipynb`. Note that this is a `bash` notebook that executes `bash` commands on the terminal in the Jupyter environment. 
