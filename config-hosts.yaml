@@ -1,0 +1,3 @@
+#cloud-config
+runcmd:
+  - echo "127.0.1.1 $(hostname)" >> /etc/hosts
