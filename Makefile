@@ -15,7 +15,7 @@ index.md: snippets/*.md images/*
 	rm index.tmp.md
 	cat snippets/footer.md >> index.md
 
-0_intro.ipynb: snippets/provision_gui.md
+0_intro.ipynb: snippets/intro.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
                 -i snippets/frontmatter_python.md snippets/intro.md \
                 -o 0_intro.ipynb  
