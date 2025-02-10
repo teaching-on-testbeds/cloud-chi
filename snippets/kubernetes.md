@@ -466,7 +466,7 @@ vim deployment.yaml
 
 Navigate to the line where the number of replicas is defined. Then, use `i` to switch from command mode to insert mode, and change it from 1 to 6.
 
-Use `Esc` to return to command mode, and `:wd` and then `Enter` to save the file and quit the editor.
+Use `Esc` to return to command mode, and `:wq` and then `Enter` to save the file and quit the editor.
 
 To apply this change, run 
 
@@ -543,7 +543,7 @@ spec:
 
 This says to scale the number of replicas from 2 (minimum) up to 6 (maximum) if the existing replicas have high CPU utilization, i.e. they are under heavy load.
 
-Use `Esc` to return to command mode, and `:wd` and then `Enter` to save the file and quit the editor.
+Use `Esc` to return to command mode, and `:wq` and then `Enter` to save the file and quit the editor.
 
 To apply this change, run 
 
