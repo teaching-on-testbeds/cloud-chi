@@ -13,6 +13,8 @@ index.md: snippets/*.md images/*
 		> index.tmp.md
 	grep -v '^:::' index.tmp.md > index.md
 	rm index.tmp.md
+	cat snippets/extras.md >> index.md
+	cat snippets/contributors.md >> index.md
 	cat snippets/footer.md >> index.md
 
 0_intro.ipynb: snippets/intro.md

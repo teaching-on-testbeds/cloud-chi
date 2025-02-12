@@ -1888,6 +1888,21 @@ Then, delete resources in *exactly* this order:
 - Click on Network > Networks. Open any network(s) that include your net ID, and select the "Ports" tab. Check the boxes next to each port, then click "Delete Ports". Once this is done, use the menu near the top to select "Delete Network".
 
 
+<!-- 
+
+## What we *didn't* talk about
+
+- Docker compose, which can manage groups of containers together but (unlike Kubernetes) not across hosts
+- Types of services on Kubernetes (NodePort, LoadBalancer, etc.)
+
+-->
+
+<hr>
+
+<small>Contributors: <a href="https://github.com/ffund">Fraida Fund</a>, <a href="https://github.com/indianspeedster">Shekhar Pandey</a>.</small>
+
+
+
 <hr>
 
 <small>Questions about this material? Contact Fraida Fund</small>
