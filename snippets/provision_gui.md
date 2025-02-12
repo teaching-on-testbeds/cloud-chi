@@ -91,7 +91,7 @@ You will be prompted to set up your instance step by step using a graphical "wiz
   * Click "Next".
 * In the fifth ("Ports") tab, we will additionally use the port we just created to attach the instance to the private network we created earlier. 
   * From the "Available" list, find the port you created earlier. (The subnet is noted by name in the "IP" column. Since the subnet has your net ID in its name, you can search using your net ID to find "your" port.)
-  * Click the arrow next to it, and it will appear in the "Available" list.
+  * Click the arrow next to it, and it will appear in the "Allocated" list.
   * Click "Next".
 * In the sixth ("Security Groups") tab, we will specify the rules according to which the infrastructure provider will pass traffic to and from our instances. We need to add security groups for any port (in the "TCP port" sense, not the "switch port" sense) on which we will need to receive incoming connections on our instances.
   * Expand the `default` section to see the details of the currently allocated security group, `default`. It is configured to allow egress (outgoing) connections to any remote address (`0.0.0.0/0` means "every address"), but to allow ingress (incoming) connections from no address.
