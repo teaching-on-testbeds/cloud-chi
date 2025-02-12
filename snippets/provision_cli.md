@@ -116,18 +116,6 @@ openstack network list | grep netID
 ```
 :::
 
-::: {.cell .markdown}
-
-but there may be a lot of them! We can use `grep` to filter this output by our own net ID, to see the private network we created earlier. In the cell below, replace **netID** with your *own* net ID before you run it.
-
-:::
-
-::: {.cell .code}
-```bash
-openstack network list | grep netID
-```
-:::
-
 
 ::: {.cell .markdown}
 
