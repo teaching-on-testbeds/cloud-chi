@@ -110,7 +110,7 @@ runcmd:
 
 Then you can click "Launch Instance" (the remaining tabs are not required).
 
-You will see your instance appear in the list of compute instances, initally in the "Spanning" state. Within a few moments, it will go to the "Running" state. 
+You will see your instance appear in the list of compute instances, initally in the "Spawning" state. Within a few moments, it will go to the "Running" state. 
 
 Click on the &#x25BC; menu to the far right side of the running compute instance, to see the options that are available. You will see that you can do things like:
 
