@@ -302,6 +302,7 @@ export OS_PROJECT_NAME="CHI-XXXXXX"
 export OS_REGION_NAME="KVM@TACC"
 ```
 
+<!-- 
 
 ### Other setup
 
@@ -313,7 +314,7 @@ PYTHONUSERBASE=/work/.local pip install --user git+https://github.com/ChameleonC
 export PATH=/work/.local/bin:$PATH
 ```
 
-
+-->
 
 
 ### Exploring the cloud

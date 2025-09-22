@@ -52,6 +52,7 @@ export OS_REGION_NAME="KVM@TACC"
 ```
 :::
 
+<!-- 
 ::: {.cell .markdown}
 
 ### Other setup
@@ -67,7 +68,7 @@ export PATH=/work/.local/bin:$PATH
 ```
 :::
 
-
+-->
 
 ::: {.cell .markdown}
 
