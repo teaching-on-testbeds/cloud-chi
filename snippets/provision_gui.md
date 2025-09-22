@@ -61,7 +61,7 @@ We are now going to create a port on our "private" network, and later we will at
 
 We will set up the port as follows:
 
-* It's OK to leave "Name" blank (a name will be automatically generated)
+* Set the Name to <code>port1_<b>netID</b></code>, substituting your own net ID
 * In the "Specify IP address or subnet" menu, choose "Fixed IP address"
 * Then, in the "Fixed IP Address" field, put `192.168.1.11`
 * Un-check the box next to "Port Security"
@@ -71,6 +71,24 @@ We will set up the port as follows:
 Our topology now looks like this (gray parts are not yet provisioned):
 
 ![Experiment topology.](images/2-lab-topology-one-port.svg)
+
+### Reserve a VM instance
+
+Chameleon Cloud uses reserved VMs, so before we can provision a VM instance, we must make a reservation. General compute VMs are generally not scarce resources, so we can make this reservation immediately before provisioning the instance - we don't have to make it in advance. (For resources that are more in demand, like some types of GPU resources, we would need to make an advance reservation.)
+
+* On the left side of the interface, expand the "Reservations" menu
+* Choose the "Leases" option
+* Click the "Create Lease" button 
+
+You will be prompted to set up your lease step by step using a graphical "wizard".
+
+* On the first ("General") tab, set the instance name to  <code>lease1_cloud_<b>netID</b></code> where in place of <code><b>netID</b></code> you substitute your own net ID (e.g. `ff524` in my case). Leave other settings at their default values, and click "Next".
+* Set the "Start Date" to today's date, and the "Start Time" to a few minutes later than the current time. For most users, the time zone setting is UTC, so you will need to specify the start date and time [in UTC](https://www.timeanddate.com/worldclock/timezone/utc). (You can check your time zone setting in your [User Settings](https://kvm.tacc.chameleoncloud.org/settings/).)
+* Set the "End Time" to 8 hours later. 
+  * If this will be on the same calendar day as your "Start Date", set "Lease Length" to 0 days. 
+  * If this will be on the next calendar day, set "Lease Length" to 1 day.
+* In the second ("Flavors") tab, we will specify the resources that will be allocated to the lease. Check the "Reserve Flavors" box. Set "Number of Instances for Flavor" to 1. Then, click "Select" next to `m1.medium`. 
+* Click "Create".
 
 ### Provision a VM instance
 
@@ -85,12 +103,12 @@ You will be prompted to set up your instance step by step using a graphical "wiz
 
 * On the first ("Details") tab, set the instance name to  <code>node1-cloud-<b>netID</b></code> where in place of <code><b>netID</b></code> you substitute your own net ID (e.g. `ff524` in my case). Leave other settings at their default values, and click "Next".
 * In the second ("Source") tab, we specify the source disk from which the instance should boot. In the "Select Boot Source" menu, choose "Image". Then, in the "Available" list at the bottom, search for `CC-Ubuntu24.04` (exactly - without any date suffix). Click the arrow next to this entry. You will see the `CC-Ubuntu24.04` image appear in the "Allocated" list. Click "Next".
-* In the third ("Flavor") tab, we specify the resources that will be allocated to the instance. In the "Available" list at the bottom, click the arrow next to `m1.medium`.  You will see the `m1.medium` flavor appear in the "Allocated" list. Click "Next".
+* In the third ("Flavor") tab, click the arrow next to the lease you made in the previous step.  You will see your "reserved" flavor appear in the "Allocated" list. Click "Next".
 * In the fourth ("Networks") tab, we will attach the instance to a network provided by the infrastructure provider which is connected to the Internet.
   * From the "Available" list, click on the arrow next to `sharednet1`. It will appear as item 1 in the "Allocated" list. 
   * Click "Next".
 * In the fifth ("Ports") tab, we will additionally use the port we just created to attach the instance to the private network we created earlier. 
-  * From the "Available" list, find the port you created earlier. (The subnet is noted by name in the "IP" column. Since the subnet has your net ID in its name, you can search using your net ID to find "your" port.)
+  * From the "Available" list, find the port you created earlier. (The subnet is noted by name in the "IP" column. You can search using your net ID to find "your" port.)
   * Click the arrow next to it, and it will appear in the "Allocated" list.
   * Click "Next".
 * In the sixth ("Security Groups") tab, we will specify the rules according to which the infrastructure provider will pass traffic to and from our instances. We need to add security groups for any port (in the "TCP port" sense, not the "switch port" sense) on which we will need to receive incoming connections on our instances.

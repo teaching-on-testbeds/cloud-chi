@@ -52,6 +52,22 @@ export OS_REGION_NAME="KVM@TACC"
 ```
 :::
 
+::: {.cell .markdown}
+
+### Other setup
+
+The OpenStack CLI installed in this JupyterHub environment is not the most recent version, and we need some features that are only available in the most recent version (namely: VM instance reservation). So, we must update the Blazar (reservation service) client, and then make sure the shell will use that updated version.
+
+:::
+
+::: {.cell .code}
+```bash
+PYTHONUSERBASE=/work/.local pip install --user git+https://github.com/ChameleonCloud/python-blazarclient.git
+export PATH=/work/.local/bin:$PATH
+```
+:::
+
+
 
 ::: {.cell .markdown}
 
@@ -235,6 +251,54 @@ Next, let's look at the compute resources.
 
 ::: {.cell .markdown}
 
+First, since Chameleon requires reservations for compute instances, we'll need a reservation. Check the current reservation list with:
+
+:::
+
+::: {.cell .code}
+```bash
+openstack reservation lease list
+```
+:::
+
+
+::: {.cell .markdown}
+
+We will create a single lease with reservations for **two** `m1.medium` flavors, for 8 hours. We will use the `date` command to automatically set the start and end time.
+
+In the cell below, replace **netID** with your own net ID, then run it to request a lease:
+
+:::
+
+::: {.cell .code}
+```bash
+openstack reservation lease create lease2_cloud_netID \
+  --start-date "$(date -u '+%Y-%m-%d %H:%M')" \
+  --end-date "$(date -u -d '+8 hours' '+%Y-%m-%d %H:%M')" \
+  --reservation "resource_type=flavor:instance,flavor_id=$(openstack flavor show m1.medium -f value -c id),amount=2"
+```
+:::
+
+::: {.cell .markdown}
+
+Then, check the list again:
+
+:::
+
+
+::: {.cell .code}
+```bash
+openstack reservation lease list
+```
+:::
+
+
+
+
+::: {.cell .markdown}
+
+Now, we are ready to create some additional server instances.
+
 In the cell below, replace **netID** with your own net ID to see a list of already-provisioned servers that have your net ID in their name:
 
 :::
@@ -261,7 +325,7 @@ openstack server create -h
 
 ::: {.cell .markdown}
 
-We are going to want to specify the image name, the flavor, and the key to install on the new compute instances, along with their network connectivity. We already confirmed the network resources, but let's look at the rest to make sure we know what everything is called:
+We are going to want to specify the image name and the key to install on the new compute instances, along with their network connectivity. We already confirmed the network resources, but let's look at the rest to make sure we know what everything is called:
 
 :::
 
@@ -275,13 +339,23 @@ openstack image list --limit 5
 
 ::: {.cell .code}
 ```bash
-openstack flavor list
+openstack keypair list
 ```
+:::
+
+::: {.cell .markdown}
+
+We are also going to need to get the reserved "flavor" ID, from the reservation we just made. We'll save this in a variable `flavor_id` so that we can reuse it in our `openstack server create` command.
+
+In the cell below, replace **netID** with your own net ID in the lease name.
+
 :::
 
 ::: {.cell .code}
 ```bash
-openstack keypair list
+flavor_id=$(openstack reservation lease show lease2_cloud_netID -f json -c reservations \
+      | jq -r '.reservations[0].flavor_id')
+echo $flavor_id
 ```
 :::
 
@@ -299,7 +373,7 @@ Now we can launch our additional compute instances! In the two cells below, you 
 ```bash
 openstack server create \
   --image "CC-Ubuntu24.04" \
-  --flavor m1.medium \
+  --flavor $flavor_id \
   --network sharednet1 \
   --port port2_netID \
   --security-group default \
@@ -315,7 +389,7 @@ openstack server create \
 ```bash
 openstack server create \
   --image "CC-Ubuntu24.04" \
-  --flavor m1.medium \
+  --flavor $flavor_id \
   --network sharednet1 \
   --port port3_netID \
   --security-group default \
