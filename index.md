@@ -380,7 +380,7 @@ We can similarly see the subnets we created earlier. In the two cells below, rep
 
 
 ```bash
-openstack subnet list | grep ff524
+openstack subnet list | grep netID
 ```
 
 ```bash
@@ -519,7 +519,7 @@ openstack keypair list
 
 We are also going to need to get the reserved "flavor" ID, from the reservation we just made. We'll save this in a variable `flavor_id` so that we can reuse it in our `openstack server create` command.
 
-In the cell below, replace **netID** with your own net ID in the lease name.
+In the cell below, replace **netID** with your own net ID in the lease name. This cell should print a UUID:
 
 
 ```bash
@@ -1424,7 +1424,7 @@ sudo service firewalld stop
 ```
 
 
-Finally, we need to remove the version of Docker we installed earlier on node1; `kupesrapy` will install a different version (one that is specifically known to work with the version of Kubernetes that it will deploy).
+We also need to remove the version of Docker we installed earlier on node1; `kubespray` will install a different version (one that is specifically known to work with the version of Kubernetes that it will deploy).
 
 
 ```bash
@@ -1432,6 +1432,33 @@ Finally, we need to remove the version of Docker we installed earlier on node1; 
 sudo apt -y remove docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin;
 sudo rm /etc/apt/sources.list.d/docker.list; sudo apt update;
 ```
+
+
+Finally, on all three nodes, we will configure the Docker service (once it is installed again) 
+
+* to use a local "mirror" of DockerHub images on KVM@TACC, instead of pulling every image from the Internet. This will help us work around DockerHub rate limits on `docker pull` commands.
+* and, to allow use of an insecure private Docker image registry that *we* will host ourselves, for our GourmetGram container images.
+
+
+```bash
+# run on node1, node2, and node3
+sudo mkdir -p /etc/docker/
+sudo vim /etc/docker/daemon.json
+```
+
+In the editor, type `i` to switch from command mode to insert mode. Then, paste
+
+
+```
+{
+ "registry-mirrors":["http://kvm-dyn-129-114-25-246.tacc.chameleoncloud.org:5000"],
+ "insecure-registries":["kvm-dyn-129-114-25-246.tacc.chameleoncloud.org:5000" , "node1:5000"]
+}
+```
+
+Use `Esc` to get back in command mode, then `:wq` and hit Enter to save and quit the tet editor.
+
+You can close the SSH connections to node2 and node3 now; you'll only need to run commands on node1 for the rest of this section.
 
 
 ### Prepare `kubespray`
@@ -1447,7 +1474,7 @@ sudo apt update; sudo apt -y install virtualenv
 virtualenv -p python3 myenv
 ```
 
-We install prerequisite Python packages in this virual environment
+We install prerequisite Python packages in this virtual environment
 
 ```bash
 # run on node1
@@ -1547,32 +1574,8 @@ docker run -d -p 5000:5000 --restart always --name registry registry:2
 
 to start a registry (inside a container, of course!) which will run on port 5000 on node1.
 
-This registry is not secured (there is no authentication; anyone can push a container image to the registry, or pull a container image from the registry). We will have to explicitly configure the Docker engine on each of the three nodes to permit the use of this registry.
+This registry is not secured (there is no authentication; anyone can push a container image to the registry, or pull a container image from the registry). We have already configured the Docker engine on each of the three nodes to permit the use of this registry.
 
-```bash
-# run on node1, node2, and node3
-sudo vim /etc/docker/daemon.json
-```
-
-In the editor, type `i` to switch from command mode to insert mode. Then, paste
-
-
-```
-{
-    "insecure-registries": ["node1:5000"]
-}
-```
-
-Use `Esc` to get back in command mode, then `:wq` and hit Enter to save and quit the tet editor.
-
-To apply this change, restart the Docker service:
-
-```bash
-# run on node1, node2, and node3
-sudo service docker restart
-```
-
-You can close the SSH connections to node2 and node3 now; you'll only need to run commands on node1 for the rest of this section.
 
 We'll need to push the container for our GourmetGram app to this registry. Run
 
@@ -1592,7 +1595,7 @@ On Kubernetes, **namespaces** are used to create logical groups of resources, se
 
 ```bash
 # run on node1
-kubectl create namespace kube-gourmetgram
+kubectl create namespace gourmetgram-production
 ```
 
 We can list existing namespaces with 
@@ -1622,21 +1625,21 @@ Then, paste the following:
 apiVersion: v1
 kind: Service
 metadata:
-  name: gourmetgram-kube-svc
-  namespace: kube-gourmetgram
+  name: gourmetgram-svc
+  namespace: gourmetgram-production
 
 ```
 
 This says we are going to define a **Service**. A Service in Kubernetes is the network endpoint on which your application can be reached; although the application is actually going to be executed by one or more containers potentially distributed across nodes in the cluster, it can always be reached at this network endpoint.
 
-We specify the name of the service, `gourmetgram-kube-svc`, and that it is in the `kube-gourmetgram` namespace.
+We specify the name of the service, `gourmetgram-svc`, and that it is in the `gourmetgram-production` namespace.
 
 Next, paste in the rest of the definition of the Service:
 
 ```
 spec:
   selector:
-    app: gourmetgram-kube-app
+    app: gourmetgram-app
   ports:
     - protocol: "TCP"
       port: 80          # Service port inside the cluster
@@ -1648,7 +1651,7 @@ spec:
 
 but in place of 10.56.X.Y, substitute the IP address of your node1 host on the `sharednet1` network (the network that faces the Internet).
 
-This specifies that our service will be the network endpoints for the `gourmetgram-kube-app` application (which we'll define shortly). Our service will listen for incoming connections on TCP port 80, and then it will forward those requests to the containers running the application on *their* port 8000. 
+This specifies that our service will be the network endpoints for the `gourmetgram-app` application (which we'll define shortly). Our service will listen for incoming connections on TCP port 80, and then it will forward those requests to the containers running the application on *their* port 8000. 
 
 The service is of type **ClusterIP**, which means that it will accept incoming traffic on an IP address that belongs to a node in the cluster; here, we specify the IP address in `externalIPs`.
 
@@ -1661,11 +1664,11 @@ Next, we'll add a **Deployment** definition to the file. Paste in the following:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gourmetgram-kube-app
-  namespace: kube-gourmetgram
+  name: gourmetgram-app
+  namespace: gourmetgram-production
 ```
 
-While a Service describes the network endpoint, the Deployment describes the pods that will run and actually implement the service. (In Kubernetes, a **pod** is a container or a group of containers that are deployed and scaled together; we'll stick to one-container-per-pod.) We have named our deployment `gourmetgram-kube-app`.
+While a Service describes the network endpoint, the Deployment describes the pods that will run and actually implement the service. (In Kubernetes, a **pod** is a container or a group of containers that are deployed and scaled together; we'll stick to one-container-per-pod.) We have named our deployment `gourmetgram-app`.
 
 Next, we will specify more details of the Deployment. Paste this into the file:
 
@@ -1673,15 +1676,15 @@ Next, we will specify more details of the Deployment. Paste this into the file:
 spec:
   selector:
     matchLabels:
-      app: gourmetgram-kube-app
+      app: gourmetgram-app
   replicas: 1
   template:
     metadata:
       labels:
-        app: gourmetgram-kube-app
+        app: gourmetgram-app
 ```
 
-Our Deployment will give all pods it creates the label `gourmetgram-kube-app`. Note that this app label was specified in the "selector" part of the Service definition; this makes sure that traffic directed to the Service will be passed to the correct pods.
+Our Deployment will give all pods it creates the label `gourmetgram-app`. Note that this app label was specified in the "selector" part of the Service definition; this makes sure that traffic directed to the Service will be passed to the correct pods.
 
 Our current Deployment uses 1 **replicas**, or copies of the pod.
 
@@ -1690,7 +1693,7 @@ Next, we'll specify the details of the containers in the pods. Paste this in:
 ```
     spec:
       containers:
-      - name: gourmetgram-kube-app
+      - name: gourmetgram-app
         image: node1:5000/gourmetgram-app:latest
         imagePullPolicy: Always
         ports:
@@ -1741,15 +1744,15 @@ kubectl apply -f deployment.yaml
 You should see some output that says
 
 ```
-service/gourmetgram-kube-svc created
-deployment.apps/gourmetgram-kube-app created
+service/gourmetgram-svc created
+deployment.apps/gourmetgram-app created
 ```
 
 To see the status of everything in this namespace, run
 
 ```bash
 # run on node1
-kubectl get all -n kube-gourmetgram  -o wide
+kubectl get all -n gourmetgram-production  -o wide
 ```
 
 Note that your pod may be deployed in any node in the cluster; you will see which in the "NODE" column.
@@ -1775,7 +1778,7 @@ Open a second SSH session on node1. In one, run
 
 ```bash
 # run on node1
-watch -n 5 kubectl top pod -n kube-gourmetgram
+watch -n 5 kubectl top pod -n gourmetgram-production
 ```
 
 to monitor the pod's resource usage (CPU and memory) in real time.
@@ -1827,7 +1830,7 @@ To see the effect, run
 
 ```bash
 # run on node1
-kubectl get all -n kube-gourmetgram  -o wide
+kubectl get all -n gourmetgram-production  -o wide
 ```
 
 and note that we should now have six replicas of the pod! 
@@ -1836,7 +1839,7 @@ Let's repeat our stress test. In one SSH session on node1, run
 
 ```bash
 # run on node1
-watch -n 5 kubectl top pod -n kube-gourmetgram
+watch -n 5 kubectl top pod -n gourmetgram-production
 ```
 
 In the second SSH session, run
@@ -1872,12 +1875,12 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: gourmetgram-kube-hpa
-  namespace: kube-gourmetgram
+  namespace: gourmetgram-production
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: gourmetgram-kube-app
+    name: gourmetgram-app
   minReplicas: 2
   maxReplicas: 6
   metrics:
@@ -1904,7 +1907,7 @@ To see the effect, run
 
 ```bash
 # run on node1
-kubectl get all -n kube-gourmetgram  -o wide
+kubectl get all -n gourmetgram-production  -o wide
 ```
 
 Some of our pods are now "Terminating" in order to meet our new scaling constraints! Near the bottom of this output, note the current CPU utilization is compared to the target we set.
@@ -1914,7 +1917,7 @@ Let's add some load. In one SSH session on node1, run
 
 ```bash
 # run on node1
-watch -n 5 kubectl get all -n kube-gourmetgram  -o wide
+watch -n 5 kubectl get all -n gourmetgram-production  -o wide
 ```
 
 In the second SSH session, run

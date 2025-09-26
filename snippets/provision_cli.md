@@ -161,7 +161,7 @@ We can similarly see the subnets we created earlier. In the two cells below, rep
 
 ::: {.cell .code}
 ```bash
-openstack subnet list | grep ff524
+openstack subnet list | grep netID
 ```
 :::
 
@@ -348,7 +348,7 @@ openstack keypair list
 
 We are also going to need to get the reserved "flavor" ID, from the reservation we just made. We'll save this in a variable `flavor_id` so that we can reuse it in our `openstack server create` command.
 
-In the cell below, replace **netID** with your own net ID in the lease name.
+In the cell below, replace **netID** with your own net ID in the lease name. This cell should print a UUID:
 
 :::
 
