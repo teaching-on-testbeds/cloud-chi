@@ -129,6 +129,70 @@ Our topology now looks like this (gray parts are not yet provisioned):
 
 ![Experiment topology.](images/2-lab-topology-one-port.svg)
 
+### Set up security groups
+
+On our "private" network, we have disabled security groups, which means that all network traffic is permitted between devices on this network. 
+
+However, on the Internet-facing network that we use to connect to our hosts, we use protect our compute resources from being compromised by using security groups to *only* permit the kinds of network traffic that we will need for our experiment. That is,
+
+* All outgoing traffic from our compute nodes to the Internet
+* TCP traffic incoming on port 22, which we need to access our resources over SSH
+* TCP traffic incoming on port 80, which we need to accept HTTP connections to our service
+
+Security groups are shared across the project, so the necessary security groups may already exist if another member of your project has set them up! Let's check, and set up if required.
+
+* On the left side of the interface, expand the "Network" menu
+* Choose the "Security Groups" option
+
+Look for an entry named `default`, and click "Manage Rules". You should see:
+
+* "Egress" (outgoing) traffic is permitted to any address (`0.0.0.0/0` and `::/0` represent "all IPv4 addresses" and "all IPv6 addresses", respectively), and any port.
+* "Ingress" (incoming) traffic is permitted only from other devices within the same `default` security group
+
+Go back to "Security Groups". Next, look for an entry named `allow-ssh`, and if it exists, click "Manage Rules". You should see that this rule permits ingress on TCP port 22, from any IPv4 address.
+
+*If* `allow-ssh` does not already exist, you should create it:
+
+* Click "Create Security Group"
+* Set "Name" to `allow-ssh`
+* Set "Description" to "Enable SSH traffic on TCP port 22"
+* Click "Create Security Group"
+
+then, click "Manage Rules" next to your newly created security group, and "Add Rule":
+
+* Set "Rule" to "Custom TCP Rule"
+* Set "Direction" to "Ingress"
+* Set "Open Port" to "Port"
+* Set "Port" to 22
+* Set "Remote" to "CIDR"
+* Set "CIDR" to `0.0.0.0/0`
+
+
+and click "Add". 
+
+
+Go back to "Security Groups". Look for an entry named `allow-http-80`, and if it exists, click "Manage Rules". You should see that this rule permits ingress on TCP port 80, from any IPv4 address.
+
+*If* `allow-http-80` does not already exist, you should create it:
+
+* Click "Create Security Group"
+* Set "Name" to `allow-http-80`
+* Set "Description" to "Enable HTTP traffic on TCP port 80"
+* Click "Create Security Group"
+
+then, click "Manage Rules" next to your newly created security group, and "Add Rule":
+
+* Set "Rule" to "Custom TCP Rule"
+* Set "Direction" to "Ingress"
+* Set "Open Port" to "Port"
+* Set "Port" to 80
+* Set "Remote" to "CIDR"
+* Set "CIDR" to `0.0.0.0/0`
+
+
+and click "Add". 
+
+
 ### Reserve a VM instance
 
 Chameleon Cloud uses reserved VMs, so before we can provision a VM instance, we must make a reservation. General compute VMs are generally not scarce resources, so we can make this reservation immediately before provisioning the instance - we don't have to make it in advance. (For resources that are more in demand, like some types of GPU resources, we would need to make an advance reservation.)
