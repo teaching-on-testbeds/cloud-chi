@@ -8,7 +8,7 @@ At this point, we have compute resources on which we could deploy a service dire
 After completing this section:
 
 * You should be able to `pull` a Docker container and `run` a container (either in detached or interactive/TTY mode)
-* You should be able to use `docker ps` to see running containers, and `docker stop` to stop them
+* You should be able to use `docker ps` to see running containers, `docker logs` to see output of a running proess in a container, and `docker stop` to stop containers.
 * You should be able to describe how network traffic to or from a Docker container is passed to the container by the host
 * You should be able to use `-p HOST_PORT:CONTAINER_PORT` to publish a port from the container to the host (and you should understand when you need to)
 * You should be able to describe how the overlay filesystem used by Docker works, and how it enables container images to be shared by many instances of a running container
@@ -140,13 +140,18 @@ Let's run it with a persistent terminal, so that we can interact with the contai
 
 ```bash
 # run on node1 host
-docker run -it alpine
+docker run --name alpine-shell -it --rm alpine
 ```
 
  The `-it` flags mean to start the container
  
  * `-i` interactive (so we can type into it), 
  * `-t` with a TTY (a terminal where we can see output of the commands we type)
+
+ and
+
+  * `--name alpine-shell` gives the container a predictable name. (Note the *container name* can be anything we want! If we did not specify a name, a random name would be assigned and we could find out what it is from the `docker ps` output.) 
+ * `--rm` removes the container when it stops, so we can re-run this command without cleanup
 
 
 The terminal prompt will change, indicating that we are now executing commands directly inside the container. Note the `#` at the end of the prompt, which signals that we are running commands as an admin (`root`) user inside the contaier.
@@ -229,10 +234,27 @@ We'll run another container:
 
 ```bash
 # run on node1 host
-docker run -d nginx:alpine
+docker run --name nginx-demo -d --rm nginx:alpine
 ```
 
-`nginx` is a lightweight web server, and we are running it on top of `alpine` Linux. Here, the `-d` says to run the container in "detached" mode (in the background). There should now be a web server running on TCP port 80 (the default HTTP server port) inside the container.
+`nginx` is a lightweight web server, and we are running it on top of `alpine` Linux. The image name `nginx:alpine` uses a *tag* (`alpine`) to select a specific variant of the `nginx` image; tags let you choose which version of an image to run.
+
+Also, 
+
+* `--name nginx-demo` gives the container a predictable name. 
+* the `-d` says to run the container in "detached" mode (in the background), 
+* `--rm` removes it once it stops, 
+
+There should now be a web server running on TCP port 80 (the default HTTP server port) inside the container.
+
+This container image is configured to start a long-lived process (the `nginx` server) when it is run, which is why we don't need an interactive terminal and it doesn't terminate immediately. Run
+
+```bash
+# run on node1 host
+docker logs nginx-demo
+```
+
+to see the output of the long-lived command and confirm it is running.
 
 The `nginx` image is configured to *expose* TCP port 80 outside of itself - if you run 
 
@@ -289,16 +311,16 @@ to get the details of the container. Then, run
 
 ```bash
 # run on node1 host
-docker stop CONTAINER
+docker stop nginx-demo
 ```
 
-where in place of `CONTAINER` you substitute either the name or ID of the container, from the `docker ps` output.
+This stops the `nginx-demo` container we started above. (You can also use a container ID from `docker ps`.)
 
 Now, we'll run our container again, but with the addition of the `-p` argument:
 
 ```bash
 # run on node1 host
-docker run -d -p 80:80 nginx:alpine
+docker run --name nginx-public -d --rm -p 80:80 nginx:alpine
 ```
 
 which specifies that we want to *publish* the container's port 80 (the second `80` in the argument) to the host port 80 (the first `80` in the argument).
@@ -351,10 +373,10 @@ to get the details of the container. Then, run
 
 ```bash
 # run on node1 host
-docker stop CONTAINER
+docker stop nginx-public
 ```
 
-where in place of `CONTAINER`, substitute either the name or ID of the container, from the `docker ps` output.
+This stops the `nginx-public` container we started above. (You can also use a container ID from `docker ps`.)
 
 
 ### Container filesystems
@@ -363,20 +385,20 @@ To explore the Docker filesystem, let's get back into our `nginx` container. We'
 
 ```bash
 # run on node1 host
-docker run -d --name web1 nginx:alpine
+docker run --name nginx-1 -d --rm nginx:alpine
 ```
 
 Then, we'll open a `sh` shell on the container in interactive (TTY) mode using `docker exec`:
 
 ```bash
 # run on node1 host
-docker exec -it web1 /bin/sh
+docker exec -it nginx-1 /bin/sh
 ```
 
 If you now run
 
 ```bash
-# run inside web1 nginx container
+# run inside nginx-1 container
 df
 ```
 
@@ -402,7 +424,7 @@ The overall setup is illustrated as follows:
 To see this more clearly, inside the container, run
 
 ```bash
-# run inside web1 nginx container
+# run inside nginx-1 container
 ls /
 ```
 
@@ -412,7 +434,7 @@ On the *host* (not inside the container), run
 
 ```bash
 # run on node1 host
-docker inspect web1
+docker inspect nginx-1
 ```
 
 and scroll to the `GraphDriver` part. You will see 
@@ -427,9 +449,9 @@ We can save these paths in Bash variables to make them easier to use:
 
 ```bash
 # run on node1 host
-LOWERDIRS=($(docker inspect web1 | jq -r '.[0].GraphDriver.Data.LowerDir' | tr ':' ' '))
-UPPERDIR=$(docker inspect web1 | jq -r '.[0].GraphDriver.Data.UpperDir')
-MERGED=$(docker inspect web1 | jq -r '.[0].GraphDriver.Data.MergedDir')
+LOWERDIRS=($(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.LowerDir' | tr ':' ' '))
+UPPERDIR=$(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.UpperDir')
+MERGED=$(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.MergedDir')
 ```
 
 Let's start with the "LowerDir". The first path (to the left) is the layer that contains the initial filesystem of the container. We can look at these with
@@ -462,7 +484,7 @@ sudo ls $MERGED
 Let's edit a file in the container layer to see how this works! Inside the container, run
 
 ```bash
-# run inside web1 nginx container
+# run inside nginx-1 container
 vi usr/share/nginx/html/index.html
 ```
 
@@ -472,13 +494,13 @@ vi usr/share/nginx/html/index.html
 <h1>Welcome to nginx!</h1>
 ```
 
-and to position your cursor right before the `!`. Then, type `i` to change from command mode to insert mode. Use the backspace key to erase `nginx` and replace it with `web1`.  Use the `Esc` key to get back to command mode, and type `:wq`, then hit Enter, to save and close the editor.
+and to position your cursor right before the `!`. Then, type `i` to change from command mode to insert mode. Use the backspace key to erase `nginx` and replace it with `nginx-1`. Use the `Esc` key to get back to command mode, and type `:wq`, then hit Enter, to save and close the editor.
 
 To test your work, on the *host*, get the IP address of the container with
 
 ```bash
 # run on node1 host
-docker inspect web1
+docker inspect nginx-1
 ```
 
 and then use 
@@ -488,7 +510,7 @@ and then use
 lynx http://172.17.0.X/
 ```
 
-(substituting the actual IP address) to view the page and confirm that it now says "Welcome to web1!". Use `q` and then `y` to quit the `lynx` browser.
+(substituting the actual IP address) to view the page and confirm that it now says "Welcome to nginx-1!". Use `q` and then `y` to quit the `lynx` browser.
 
 Now, let's see the effect of this change in the filesystem. First, we will look at the same file in the (read-only) image layers:
 
@@ -520,14 +542,14 @@ Now, we're going to run a second instance of the `nginx` container! On the host,
 
 ```bash
 # run on node1 host
-docker run -d --name web2 nginx:alpine
+docker run --name nginx-2 -d --rm nginx:alpine
 ```
 
 and then 
 
 ```bash
 # run on node1 host
-docker inspect web2
+docker inspect nginx-2
 ```
 
 and then scroll to the "GraphDriver" section. You will notice that the second instance of the container has exactly the same file paths for the "LowerDir" (read-only image layers) - in other words, there is a single copy of the image layers that is used by *all* instances of this container. 
@@ -539,8 +561,8 @@ Stop both running containers:
 
 ```bash
 # run on node1 host
-docker stop web1
-docker stop web2
+docker stop nginx-1
+docker stop nginx-2
 ```
 
 #### Volume mounts
@@ -560,7 +582,7 @@ Now, let us run the `nginx` container, and we will mount the `webvol` volume at 
 
 ```bash
 # run on node1 host
-docker run -d -v webvol:/usr/share/nginx/html -p 80:80 nginx:alpine
+docker run --name nginx-vol -d --rm -v webvol:/usr/share/nginx/html -p 80:80 nginx:alpine
 ```
 
 Since the `/usr/share/nginx/html` directory in the container already contains files (these are created automatically by the `nginx` installation), they will be copied to the volume. If we visit our web service using a browser, we will see the "Welcome to nginx" message on the home page.
@@ -571,7 +593,7 @@ Let us edit the home page. Run an `alpine` Linux container and mount this volume
 
 ```bash
 # run on node1 host
-docker run -it -v webvol:/data/web alpine
+docker run --rm -it -v webvol:/data/web alpine
 ```
 
 *Inside* the container, we can edit the HTML files in the `/data/web` directory
@@ -614,7 +636,7 @@ Try running your `nginx` container, but attach the `/usr/share/nginx/html` direc
 
 ```bash
 # run on node1 host
-docker run -d  -v ~/data/web:/usr/share/nginx/html -p 80:80 nginx:alpine
+docker run --name nginx-bind -d --rm -v ~/data/web:/usr/share/nginx/html -p 80:80 nginx:alpine
 ```
 
 Then, on the host, create a new HTML file inside `~/data/web`:
@@ -726,7 +748,7 @@ Now, we can run the container with
 
 ```bash
 # run on node1 host
-docker run -d -p 80:8000 gourmetgram-app:0.0.1
+docker run --name gourmetgram-app -d --rm -p 80:8000 gourmetgram-app:0.0.1
 ```
 
 Put
@@ -739,4 +761,3 @@ in the address bar of *your own* browser (on your laptop), substituting the floa
 
 
 Now that we have a basic deployment, in the next section we will scale it up using Kubernetes.
-
