@@ -677,26 +677,14 @@ In this section, we will run *all* commands on the `node1` host we brought up ea
 
 ### Install a container engine
 
-First, we need to [install the Docker engine](https://docs.docker.com/engine/install/ubuntu/). On `node1`, run
+First, we need to install the Docker engine. On `node1`, run
 
 ```bash
 # run on node1 host
 sudo apt-get update
 sudo apt-get -y install ca-certificates curl
 
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-
-# Install packages
-sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+curl -sSL https://get.docker.com/ | sudo sh
 ```
 
 If we try to use `docker` now, though, we will get an error message:
@@ -1408,7 +1396,6 @@ in the address bar of *your own* browser (on your laptop), substituting the floa
 
 
 Now that we have a basic deployment, in the next section we will scale it up using Kubernetes.
-
 
 
 ## Deploy on Kubernetes
