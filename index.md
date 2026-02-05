@@ -1078,7 +1078,16 @@ The overall setup is illustrated as follows:
 ![Container filesystems.](images/2-docker-overlayfs.svg)
 
 
-Let's look at these layers. On the *host* (not inside the container), first get the container ID:
+Let's look at these layers. 
+
+First, let's look at what is inside the filesystem from the container's perspective:
+
+```bash
+# run inside nginx-1 container
+ls
+```
+
+Then, from *outside* the container, we will see how this filesystem is realized. On the *host* (not inside the container), first get the container ID:
 
 ```bash
 # run on node1 host
@@ -1148,6 +1157,8 @@ You can see the same list of files as a "diff" - try
 # run on node1 host
 docker diff nginx-1
 ```
+
+Note that most of the files visible in the container (we saw the root of the filesystem with `ls` earlier) are *not* in the "upperdir", they are served from the "lowerdir" because they have not been modified.
 
 Let's edit a file in the container layer to see how the overlay filesystem works! Inside the container, run
 
