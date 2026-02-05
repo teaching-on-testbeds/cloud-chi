@@ -1091,7 +1091,9 @@ Then, from *outside* the container, we will see how this filesystem is realized.
 
 ```bash
 # run on node1 host
+{% raw %}
 CID=$(docker inspect -f '{{.Id}}' nginx-1)
+{% endraw %}
 echo "$CID"
 ```
 
@@ -1122,7 +1124,9 @@ and a Bash variable corresponding to the "merged" view:
 
 ```bash
 # run on node1 host
+{% raw %}
 PID=$(docker inspect -f '{{.State.Pid}}' nginx-1)
+{% endraw %}
 MERGED=/proc/$PID/root
 ```
 
