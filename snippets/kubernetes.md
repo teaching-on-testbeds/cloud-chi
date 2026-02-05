@@ -485,7 +485,7 @@ To see the effect, run
 kubectl get all -n gourmetgram-production  -o wide
 ```
 
-and note that we should now have six replicas of the pod! 
+and note that we should now have six replicas of the pod, distributed across the three nodes in our cluster! Wait for all of the replicas to be "ready".
 
 Let's repeat our stress test. In one SSH session on node1, run
 

@@ -258,7 +258,7 @@ First, since Chameleon requires reservations for compute instances, we'll need a
 
 ::: {.cell .code}
 ```bash
-openstack reservation lease list
+openstack reservation lease list --status ACTIVE
 ```
 :::
 
@@ -267,14 +267,14 @@ openstack reservation lease list
 
 We will create a single lease with reservations for **two** `m1.medium` flavors, for 8 hours. We will use the `date` command to automatically set the start and end time.
 
-In the cell below, replace **netID** with your own net ID, then run it to request a lease:
+In the cell below, replace **netID** with your own net ID, then run it to request a lease starting one minute from now:
 
 :::
 
 ::: {.cell .code}
 ```bash
 openstack reservation lease create lease2_cloud_netID \
-  --start-date "$(date -u '+%Y-%m-%d %H:%M')" \
+  --start-date "$(date -u -d '+1 minutes' '+%Y-%m-%d %H:%M')" \
   --end-date "$(date -u -d '+8 hours' '+%Y-%m-%d %H:%M')" \
   --reservation "resource_type=flavor:instance,flavor_id=$(openstack flavor show m1.medium -f value -c id),amount=2"
 ```
@@ -282,14 +282,14 @@ openstack reservation lease create lease2_cloud_netID \
 
 ::: {.cell .markdown}
 
-Then, check the list again:
+Then, check the list again, until your "lease2" appears as `ACTIVE`:
 
 :::
 
 
 ::: {.cell .code}
 ```bash
-openstack reservation lease list
+openstack reservation lease list --status ACTIVE
 ```
 :::
 

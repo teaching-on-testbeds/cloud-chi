@@ -517,30 +517,30 @@ First, since Chameleon requires reservations for compute instances, we'll need a
 
 
 ```bash
-openstack reservation lease list
+openstack reservation lease list --status ACTIVE
 ```
 
 
 
 We will create a single lease with reservations for **two** `m1.medium` flavors, for 8 hours. We will use the `date` command to automatically set the start and end time.
 
-In the cell below, replace **netID** with your own net ID, then run it to request a lease:
+In the cell below, replace **netID** with your own net ID, then run it to request a lease starting one minute from now:
 
 
 ```bash
 openstack reservation lease create lease2_cloud_netID \
-  --start-date "$(date -u '+%Y-%m-%d %H:%M')" \
+  --start-date "$(date -u -d '+1 minutes' '+%Y-%m-%d %H:%M')" \
   --end-date "$(date -u -d '+8 hours' '+%Y-%m-%d %H:%M')" \
   --reservation "resource_type=flavor:instance,flavor_id=$(openstack flavor show m1.medium -f value -c id),amount=2"
 ```
 
 
-Then, check the list again:
+Then, check the list again, until your "lease2" appears as `ACTIVE`:
 
 
 
 ```bash
-openstack reservation lease list
+openstack reservation lease list --status ACTIVE
 ```
 
 
@@ -756,8 +756,7 @@ sudo iptables --list -n
 sudo iptables --list -n -t nat
 ```
 
-we will see some firewall "chains" listed: `DOCKER-USER` for user-defined rules, `DOCKER` which will apply the port forwarding configuration we specify when we run a container, and `DOCKER-ISOLATION-STAGE-1` and `DOCKER-ISOLATION-STAGE-2` which are used to isolate container networks from one another.
-
+we will see some firewall "chains" listed: `DOCKER-USER` for user-defined rules, `DOCKER` which applies the port forwarding configuration specified when running a container, and a set of forwarding and bridge-related chains (`DOCKER-FORWARD`, `DOCKER-BRIDGE`, and `DOCKER-CT`) which are used to control and isolate container network traffic.
 
 Once we run a container, 
 
@@ -1967,7 +1966,7 @@ To see the effect, run
 kubectl get all -n gourmetgram-production  -o wide
 ```
 
-and note that we should now have six replicas of the pod! 
+and note that we should now have six replicas of the pod, distributed across the three nodes in our cluster! Wait for all of the replicas to be "ready".
 
 Let's repeat our stress test. In one SSH session on node1, run
 

@@ -99,8 +99,7 @@ sudo iptables --list -n
 sudo iptables --list -n -t nat
 ```
 
-we will see some firewall "chains" listed: `DOCKER-USER` for user-defined rules, `DOCKER` which will apply the port forwarding configuration we specify when we run a container, and `DOCKER-ISOLATION-STAGE-1` and `DOCKER-ISOLATION-STAGE-2` which are used to isolate container networks from one another.
-
+we will see some firewall "chains" listed: `DOCKER-USER` for user-defined rules, `DOCKER` which applies the port forwarding configuration specified when running a container, and a set of forwarding and bridge-related chains (`DOCKER-FORWARD`, `DOCKER-BRIDGE`, and `DOCKER-CT`) which are used to control and isolate container network traffic.
 
 Once we run a container, 
 
