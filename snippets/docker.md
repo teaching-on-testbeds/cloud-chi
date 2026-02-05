@@ -265,14 +265,7 @@ docker image inspect nginx:alpine
 
 on the *host* terminal, you will see this in the "ExposedPorts" section.
 
-On the host terminal, run
-
-```bash
-# run on node1 host
-sudo apt -y install lynx
-```
-
-to install a simple terminal-based web browser. Then, use 
+On the host terminal, use
 
 ```bash
 # run on node1 host
@@ -284,10 +277,11 @@ to find out the IP address of the `nginx` container (e.g. 172.17.0.2). Finally, 
 
 ```bash
 # run on node1 host
-lynx http://172.17.0.X/
+curl http://172.17.0.X/
 ```
 
-where in place of `X` you substitute the appropriate value for *your* container, to visit the home page served by the `nginx` web server in the container. (Type `q` and then `y` to quit the `lynx` browser.)
+where in place of `X` you substitute the appropriate value for *your* container, to see the home page served by the `nginx` web server in the container. 
+
 
 However, it's not very useful to serve a web page that is only accessible inside the Docker host! Try putting
 
@@ -337,7 +331,7 @@ It will have an address of the form `10.56.X.Y`. Then, run
 
 ```bash
 # run on node1 host
-lynx http://10.56.X.Y/
+curl http://10.56.X.Y/
 ```
 
 (substituting the IP address you found from `ip addr`). Now, the web server is accessible from the host's IP address - not only the container's IP address.
@@ -381,7 +375,15 @@ This stops the `nginx-public` container we started above. (You can also use a co
 
 ### Container filesystems
 
-To explore the Docker filesystem, let's get back into our `nginx` container. We'll specify a name for our container instance this time, which will make it easier to take further action on it. First, we'll start the container in detached mode:
+To explore the Docker filesystem, it will be helpful to have the `tree` utility, so let's install it:
+
+```bash
+# run on node1 host
+sudo apt update
+sudo apt -y install tree
+```
+
+Then, let's get back into our `nginx` container.  First, we'll start the container in detached mode:
 
 ```bash
 # run on node1 host
@@ -420,72 +422,82 @@ The overall setup is illustrated as follows:
 ![Container filesystems.](images/2-docker-overlayfs.svg)
 
 
+Let's look at these layers. On the *host* (not inside the container), first get the container ID:
 
-To see this more clearly, inside the container, run
+```bash
+# run on node1 host
+CID=$(docker inspect -f '{{.Id}}' nginx-1)
+echo "$CID"
+```
+
+and use it to locate the container's filesystem:
+
+```bash
+# run on node1 host
+sudo ctr -n moby snapshots ls | grep "$CID"
+```
+
+You will see
+
+* an entry with `KIND` set to `Active` - this represents the container’s writable filesystem and, when mounted, shows the "merged" view
+* and an entry with `KIND` set to `Committed` - this is the read-only snapshot.
+
+We'll dig a little deeper. Let's save paths in Bash variables corresponding to the "upperdir" and "lowerdir", to make them easier to use:
+
+```bash
+# run on node1 host
+sudo mkdir -p /tmp/ctr-tmp
+MOUNT_OUT=$(sudo ctr -n moby snapshots mount /tmp/ctr-tmp "$CID" 2>&1)
+UPPERDIR=$(echo "$MOUNT_OUT" | sed -n 's/.*upperdir=\([^,]*\).*/\1/p')
+LOWERDIRS=($(echo "$MOUNT_OUT" | sed -n 's/.*lowerdir=\([^,]*\).*/\1/p' | tr ':' ' '))
+sudo umount /tmp/ctr-tmp 2>/dev/null || true
+```
+
+and a Bash variable corresponding to the "merged" view:
+
+```bash
+# run on node1 host
+PID=$(docker inspect -f '{{.State.Pid}}' nginx-1)
+MERGED=/proc/$PID/root
+```
+
+Now the variable `UPPERDIR` points to the writable container layer:
+
+```bash
+# run on node1 host
+echo $UPPERDIR
+```
+
+and the array `LOWERDIRS` contains one entry per read-only image layer:
+
+```bash
+# run on node1 host
+printf 'LOWERDIR=%s\n' "${LOWERDIRS[@]}"
+```
+
+If we further explore these directories with `ls` and `cat`, it will become clear how these layers represent the changes made to the container image by the commands described in [the file used to build the image](https://github.com/nginxinc/docker-nginx/blob/master/Dockerfile-alpine-slim.template).
+
+Currently, the "upperdir" has any files created or edited in the container layer, with updated files in the container layer replacing their original version in the image layer. You can see the contents of the "upperdir" as a tree by running:
+
+```bash
+# run on node1 host
+sudo tree $UPPERDIR
+```
+
+(This layer currently has files that are edited or created automatically when the `nginx` process started at the beginning of the container's lifetime.)
+
+You can see the same list of files as a "diff" - try
+
+```bash
+# run on node1 host
+docker diff nginx-1
+```
+
+Let's edit a file in the container layer to see how the overlay filesystem works! Inside the container, run
 
 ```bash
 # run inside nginx-1 container
-ls /
-```
-
-and note the subdirectories present in the root of the filesystem.
-
-On the *host* (not inside the container), run
-
-```bash
-# run on node1 host
-docker inspect nginx-1
-```
-
-and scroll to the `GraphDriver` part. You will see 
-
-* several file paths (separated by a `:` character) listed as "LowerDir": these are the image layers
-* a file path listed as "UpperDir": this is the container layer
-* a file path listed as "MergedDir", which is the same as the "UpperDir" except with "merged" instead of "diff" as the final subdirectory
-* and a file pat listed as "WorkDir", which is the same as the "UpperDir" except with "work" instead of "diff" as the final subdirectory.
-
-
-We can save these paths in Bash variables to make them easier to use:
-
-```bash
-# run on node1 host
-LOWERDIRS=($(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.LowerDir' | tr ':' ' '))
-UPPERDIR=$(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.UpperDir')
-MERGED=$(docker inspect nginx-1 | jq -r '.[0].GraphDriver.Data.MergedDir')
-```
-
-Let's start with the "LowerDir". The first path (to the left) is the layer that contains the initial filesystem of the container. We can look at these with
-
-```bash
-# run on node1 host
-for dir in "${LOWERDIRS[@]}"; do
-    echo "$dir":
-    sudo ls "$dir"
-done
-```
-
-If we further explore these layers with `ls` and `cat`, it will become clear how these layers represent the changes made to the container image by the commands described in [the file used to build the image](https://github.com/nginxinc/docker-nginx/blob/master/Dockerfile-alpine-slim.template).
-
-Meanwhile, the `MergedDir` contains the contents of all the image layers as well as any files created or edited in the container layer, with updated files in the container layer replacing their original version in the image layer.
-
-```bash
-# run on node1 host
-sudo ls $UPPERDIR
-```
-
-(The container layer currently has files that are edited or created automatically when the `nginx` process started at the beginning of the container's lifetime.)
-
-```bash
-# run on node1 host
-sudo ls $MERGED
-```
-
-
-Let's edit a file in the container layer to see how this works! Inside the container, run
-
-```bash
-# run inside nginx-1 container
-vi usr/share/nginx/html/index.html
+vi /usr/share/nginx/html/index.html
 ```
 
 (If you haven't used `vi` before, follow these instructions very carefully - some of the keystrokes mentioned are commands that control the behavior of the editor, not text that appears in the output, which can be confusing if you are not used to it.) Use the arrow keys on your keyboard to navigate to the line that says
@@ -494,7 +506,7 @@ vi usr/share/nginx/html/index.html
 <h1>Welcome to nginx!</h1>
 ```
 
-and to position your cursor right before the `!`. Then, type `i` to change from command mode to insert mode. Use the backspace key to erase `nginx` and replace it with `nginx-1`. Use the `Esc` key to get back to command mode, and type `:wq`, then hit Enter, to save and close the editor.
+and to position your cursor right before the `!`. Then, type `i` to change from command mode to insert mode. Use the backspace key to erase `nginx` and replace it with `ECE-GY 9183`, so it says: `Welcome to ECE-GY 9183!`. Use the `Esc` key to get back to command mode, and type `:wq`, then hit Enter, to save and close the editor.
 
 To test your work, on the *host*, get the IP address of the container with
 
@@ -507,23 +519,36 @@ and then use
 
 ```bash
 # run on node1 host
-lynx http://172.17.0.X/
+curl http://172.17.0.X/
 ```
 
-(substituting the actual IP address) to view the page and confirm that it now says "Welcome to nginx-1!". Use `q` and then `y` to quit the `lynx` browser.
+(substituting the actual IP address) to view the page and confirm that it now says "Welcome to ECE-GY 9183!".
 
-Now, let's see the effect of this change in the filesystem. First, we will look at the same file in the (read-only) image layers:
+Now, let's see the effect of this change in the filesystem.  First, we will look at the same file in the (read-only) image layers:
 
 ```bash
 # run on node1 host
 for dir in "${LOWERDIRS[@]}"; do
-     FILE="$dir/usr/share/nginx/html/index.html"
-     sudo bash -c "[ -f '$FILE' ] && cat '$FILE'"
+    FILE="$dir/usr/share/nginx/html/index.html"
+    sudo bash -c "[ -f '$FILE' ] && echo \"$dir:\" && cat '$FILE'"
 done
-
 ```
 
-Then, let's look at the file in the (writeable) container layer:
+In the (writeable) container layer, though, this same file has been modified. Note that the file now appears in
+
+```bash
+# run on node1 host
+sudo tree $UPPERDIR
+```
+
+and in 
+
+```bash
+# run on node1 host
+docker diff nginx-1
+```
+
+and we can see from the file contents in the (writeable) container layer that it reflects the changes we have made:
 
 
 ```bash
@@ -531,12 +556,14 @@ Then, let's look at the file in the (writeable) container layer:
 sudo cat "$UPPERDIR/usr/share/nginx/html/index.html"
 ```
 
-Finally, we note that in the `MergedDir` (which is what processes inside the container will see!) we see the updated version of this file.
+Finally, we note that in the "merged" directory (which is what processes inside the container will see!) we see the updated version of this file.
+
 
 ```bash
 # run on node1 host
 sudo cat "$MERGED/usr/share/nginx/html/index.html"
 ```
+
 
 Now, we're going to run a second instance of the `nginx` container! On the host, run
 
@@ -549,15 +576,50 @@ and then
 
 ```bash
 # run on node1 host
-docker inspect nginx-2
+CID2=$(docker inspect -f '{{.Id}}' nginx-2)
+sudo ctr -n moby snapshots ls | grep "$CID2"
 ```
 
-and then scroll to the "GraphDriver" section. You will notice that the second instance of the container has exactly the same file paths for the "LowerDir" (read-only image layers) - in other words, there is a single copy of the image layers that is used by *all* instances of this container. 
+Then run
 
-However, it has its own container layer, with "diff", "merged", and "work" subdirectories, since the container may write to these.
+```bash
+# run on node1 host
+sudo mkdir -p /tmp/ctr-tmp
+MOUNT_OUT2=$(sudo ctr -n moby snapshots mount /tmp/ctr-tmp "$CID2" 2>&1)
+UPPERDIR2=$(echo "$MOUNT_OUT2" | sed -n 's/.*upperdir=\([^,]*\).*/\1/p')
+LOWERDIRS2=($(echo "$MOUNT_OUT2" | sed -n 's/.*lowerdir=\([^,]*\).*/\1/p' | tr ':' ' '))
+sudo umount /tmp/ctr-tmp 2>/dev/null || true
+```
+
+to get the "upperdir" and "lowerdir" for this container.
+
+If you compare the "lowerdir" layers for the first and second container:
+
+```bash
+# run on node1 host
+printf 'LOWERDIR=%s\n' "${LOWERDIRS[@]}"
+```
+
+```bash
+# run on node1 host
+printf 'LOWERDIR2=%s\n' "${LOWERDIRS2[@]}"
+```
+
+You will notice that except for the top layer, which is not strictly part of the image, the second instance of the container has exactly the same file paths for the "lowerdir" (read-only image layers) - in other words, there is a single copy of the image layers that is used by *all* instances of this container. 
+
+However, it has its own separate "upperdir" container layer, since the container may write to these.
+
+```bash
+# run on node1 host
+echo $UPPERDIR
+```
+
+```bash
+# run on node1 host
+echo $UPPERDIR2
+```
 
 Stop both running containers:
-
 
 ```bash
 # run on node1 host
