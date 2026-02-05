@@ -586,7 +586,9 @@ and then
 
 ```bash
 # run on node1 host
+{% raw %}
 CID2=$(docker inspect -f '{{.Id}}' nginx-2)
+{% endraw %}
 sudo ctr -n moby snapshots ls | grep "$CID2"
 ```
 
